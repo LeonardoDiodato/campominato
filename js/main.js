@@ -10,7 +10,7 @@ const img_size = 32;
 //const top_left_X = canvas_size - (grid_width * square_size);
 //const top_left_Y = canvas_size - (grid_height * square_size);
 const images = {};
-const images_names = ["1", "2", "3", "4", "5", "6", "7", "8", "block", "exploded", "flag", "hold", "maybe", "mina", "vuoto"];
+const images_names = ["1", "2", "3", "4", "5", "6", "7", "8", "block", "exploded", "flag", "hold", "maybe", "mina", "vuoto", "sbagliato"];
 let mousedown = false;
 let click_queue = [];
 /**
@@ -21,10 +21,8 @@ images_names.forEach((v, idx, arr) => {
     img.addEventListener(
         "load",
         () => {
-//            console.log("image "+v+" loaded");
             images[v] = img;
-            if(Object.keys(images).length === 15){
-//                console.log(images);
+            if(Object.keys(images).length === 16){
                 b.draw();
             }
         },
@@ -33,20 +31,7 @@ images_names.forEach((v, idx, arr) => {
     img.src = "imgs/"+v+".png"; // Set source path
 });
 
-/*
-function showGrid() {
-    for (let i = top_left; i < canvas_size; i += square_size) {
-        ctx.moveTo(top_left, i);
-        ctx.lineTo(canvas_size, i);
-        ctx.stroke();
 
-        ctx.moveTo(i, top_left);
-        ctx.lineTo(i, canvas_size);
-        ctx.stroke();
-    }
-}
-showGrid();
-*/
 canvas.addEventListener("contextmenu", function(event) {
     event.preventDefault();
     let top = 0,
@@ -149,7 +134,13 @@ class Tile {
 
     img(){
         if(this.flag){
-            return images["flag"];
+            if(!this.status) {
+                return images["flag"];
+            }else{
+                if(!this.mine){
+                    return images["sbagliato"];
+                }
+            }
         }
         if(!this.status){
             if(!this.hover) {

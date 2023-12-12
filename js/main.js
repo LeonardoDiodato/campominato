@@ -127,9 +127,20 @@ class Tile {
         this.flag = false;
         this.maybe = false;
         this.value = 0;
+        this.explored = false;
+        this.valuto = false;
     }
     setValue(v){
         this.value = v;
+    }
+    getValue(){
+        if(!this.status){
+            return "block";
+        }
+        if(this.mine){
+            return -1;
+        }
+        return this.value;
     }
 
     img(){
@@ -229,6 +240,7 @@ class Board {
         canvas.setAttribute("width",(this.x * square_size) + "px");
         canvas.setAttribute("height",(this.y * square_size) + "px");
         ctx = canvas.getContext("2d");
+        ctx.fillStyle = "red";
         for(let i = 0; i < this.x; i++){
             this.layout[i] = [];
             for(let j = 0; j < this.y; j++){
@@ -275,6 +287,21 @@ class Board {
             for(let j = 0; j < this.y; j++){
                 let img = this.layout[i][j].img();
                 ctx.drawImage(img, img_size*i, img_size*j);
+/*
+                if(this.layout[i][j].explored){
+                    ctx.fillStyle = "red";
+                    ctx.beginPath();
+                    ctx.rect(i*img_size,j*img_size,10,10);
+                    ctx.fill();
+                }
+ */
+                if(this.layout[i][j].valuto){
+                    ctx.fillStyle = "blue";
+                    ctx.beginPath();
+                    ctx.rect(i*img_size,j*img_size,10,10);
+                    ctx.fill();
+                    this.layout[i][j].valuto = false;
+                }
             }
         }
     }
@@ -331,6 +358,10 @@ class Board {
                 }
             }
         }
+    }
+
+    getValue(x,y){
+        return this.layout[x][y].getValue();
     }
 }
 

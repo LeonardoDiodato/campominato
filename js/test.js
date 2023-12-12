@@ -137,7 +137,8 @@ class Solver {
             if(ii >= 0 && ii < this.x && jj >= 0 && jj < this.y) {
                 if(this.layout[ii][jj] === "na"){
                     this.layout[ii][jj] = "BOMB";
-                    b.layout[ii][jj].rightClick();
+//                    b.layout[ii][jj].rightClick();
+                    b.rightClick(ii, jj);
                 }
             }
         }

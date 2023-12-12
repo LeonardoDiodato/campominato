@@ -22,7 +22,8 @@
         <option value="intermediate">Intermediate</option>
         <option value="expert">Expert</option>
     </select>
-    <button id="start" onclick="start()" style="float:left;clear:left;margin:30px 0;">Start</button>
+    <div style="margin:10px 0;"><span id="current"></span> / <span id="tot"></span> : <span id="ratio"></span></div>
+    <button id="start" onclick="start()" style="float:left;clear:left;margin:10px 0;">Start</button>
     <button style="float:left;clear:left;" onclick="location.href=location.href">RESET</button>
 </div>
 <canvas id="myCanvas" width="960" height="512" style="border:1px solid black;margin-top:100px;"></canvas>

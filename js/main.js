@@ -13,6 +13,9 @@ const images = {};
 const images_names = ["1", "2", "3", "4", "5", "6", "7", "8", "block", "exploded", "flag", "hold", "maybe", "mina", "vuoto", "sbagliato"];
 let mousedown = false;
 let click_queue = [];
+const current = document.getElementById('current');
+const tot = document.getElementById('tot');
+const ratio = document.getElementById('ratio');
 /**
  * Load images into images obj
  */
@@ -31,6 +34,13 @@ images_names.forEach((v, idx, arr) => {
     img.src = "imgs/"+v+".png"; // Set source path
 });
 
+function updateRatio(val){
+    current.innerHTML = val;
+    let found = parseInt(val);
+    let tot_ = parseInt(tot.innerHTML);
+    let ratio_ = Math.round((found / tot_) * 1000) / 10;
+    ratio.innerHTML = ratio_+" %";
+}
 
 canvas.addEventListener("contextmenu", function(event) {
     event.preventDefault();
@@ -50,7 +60,8 @@ canvas.addEventListener("contextmenu", function(event) {
 
     let cell_X = Math.floor(x / square_size);
     let cell_Y = Math.floor(y / square_size);
-    b.layout[cell_X][cell_Y].rightClick();
+//    b.layout[cell_X][cell_Y].rightClick();
+    b.rightClick(cell_X,cell_Y);
     render();
 });
 canvas.addEventListener("mousedown", function(event) {
@@ -198,14 +209,16 @@ class Tile {
         if(!this.status){
             if(!this.flag && !this.maybe){
                 this.flag = true;
-                return;
+                return 1;
             }
             if(this.maybe){
                 this.maybe = false;
+                return 0;
             }
             if(this.flag){
                 this.flag = false;
                 this.maybe = true;
+                return -1;
             }
         }
     }
@@ -216,6 +229,7 @@ class Board {
     x = 0;
     y = 0;
     hover = [];
+    found = 0;
     constructor(level = "expert"){
         switch (level){
             case "beginner":
@@ -257,6 +271,9 @@ class Board {
             }
         }
         this.setTilesValues();
+        current.innerHTML = "0";
+        tot.innerHTML = this.mines;
+        updateRatio(0);
     }
 
     setTilesValues(){
@@ -362,6 +379,11 @@ class Board {
 
     getValue(x,y){
         return this.layout[x][y].getValue();
+    }
+
+    rightClick(x,y){
+        this.found += this.layout[x][y].rightClick();
+        updateRatio(this.found);
     }
 }
 

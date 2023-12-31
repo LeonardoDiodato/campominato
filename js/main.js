@@ -127,6 +127,9 @@ canvas.addEventListener("mouseup", function(event) {
     let cell_Y = Math.floor(y / square_size);
 //    console.log("mouseup on "+cell_X+" - "+cell_Y);
     b.mouseup(cell_X, cell_Y);
+    if(typeof S !== "undefined"){
+        S.setValue(cell_X, cell_Y, b.layout[cell_X][cell_Y].getValue(), true);
+    }
 });
 
 class Tile {
@@ -140,6 +143,10 @@ class Tile {
         this.value = 0;
         this.explored = false;
         this.valuto = false;
+        this.ratio = [];
+        this.combined_ratio = 0;
+        this.touches = [];
+        this.missing_value = 0;
     }
     setValue(v){
         this.value = v;
@@ -161,6 +168,8 @@ class Tile {
             }else{
                 if(!this.mine){
                     return images["sbagliato"];
+                }else{
+                    return images["flag"];
                 }
             }
         }
@@ -221,6 +230,17 @@ class Tile {
                 return -1;
             }
         }
+    }
+
+    addRatio(obj){
+        if(this.ratio.length > 0){
+            for(let i = 0; i < this.ratio.length; i++){
+                if(this.ratio[i].from[0] === obj.from[0] && this.ratio[i].from[1] === obj.from[1]){
+                    this.ratio.splice(i,1);
+                }
+            }
+        }
+        this.ratio.push(obj);
     }
 }
 
@@ -308,10 +328,10 @@ class Board {
                 if(this.layout[i][j].explored){
                     ctx.fillStyle = "red";
                     ctx.beginPath();
-                    ctx.rect(i*img_size,j*img_size,10,10);
+                    ctx.rect((i*img_size) + 10,(j*img_size) + 10,5,5);
                     ctx.fill();
                 }
- */
+*/
                 if(this.layout[i][j].valuto){
                     ctx.fillStyle = "blue";
                     ctx.beginPath();
@@ -319,6 +339,28 @@ class Board {
                     ctx.fill();
                     this.layout[i][j].valuto = false;
                 }
+/*
+                if(!this.layout[i][j].flag && !this.layout[i][j].status) {
+                    if (this.layout[i][j].ratio.length > 0) {
+                        let val = 0;
+                        if(this.layout[i][j].combined_ratio !== 0) {
+                            ctx.fillStyle = "red";
+                            val = this.layout[i][j].combined_ratio;
+                        }else{
+                            ctx.fillStyle = "green";
+                            val = this.layout[i][j].ratio[0].value;
+                        }
+                        ctx.font = "10px Arial";
+                        ctx.fillText(this.layout[i][j].ratio.length+":"+val, ((i * img_size) ), ((j * img_size) + 20));
+                    }
+                }
+
+
+                if(i === 0 || j === 0){
+                    ctx.font = "10px Arial";
+                    ctx.fillText(i+"_"+j, ((i * img_size) ), ((j * img_size) + 20));
+                }
+*/
             }
         }
     }
@@ -352,7 +394,9 @@ class Board {
     youLost(){
         for(let i = 0; i < this.x; i++){
             for(let j = 0; j < this.y; j++){
-                this.layout[i][j].status = true;
+                if(this.layout[i][j].flag || this.layout[i][j].mine) {
+                    this.layout[i][j].status = true;
+                }
             }
         }
     }

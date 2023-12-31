@@ -57,7 +57,8 @@ class Solver {
 
     lost(val){
         if(val === -1){
-            console.log("LOST");
+//            console.trace();
+//            console.log("LOST");
             queue = [];
             back_queue = [];
             let time = 1000;
@@ -118,7 +119,8 @@ class Solver {
                 b.layout[x][y].touches = [];
             }
             b.layout[x][y].valuto = true;
-            console.log("valuto "+x+" "+y+": "+S.layout[x][y]);
+
+//            console.log("valuto "+x+" "+y+": "+S.layout[x][y]);
             if(S.layout[x][y] === -1){
                 console.log(queue);
                 console.trace();
@@ -152,10 +154,10 @@ class Solver {
                     S.computeStats(x,y);
                     let missing_value = b.layout[x][y].missing_value;
 
-                    console.log(b.layout[x][y].votanti);
+//                    console.log(b.layout[x][y].votanti);
 
-/*
                     for (let j = 0; j < b.layout[x][y].votanti.length; j++){
+/*
                         console.log("valuto votante "+j);
                         console.log(typeof b.layout[x][y].votanti[j].x);
                         console.log(b.layout[x][y].votanti[j].x);
@@ -165,16 +167,16 @@ class Solver {
                         console.log(b.layout[x][y].votanti[j].y);
                         console.log(typeof y);
                         console.log(y);
-                        if(b.layout[x][y].votanti[j].x !== x || b.layout[x][y].votanti[j].y !== y){
-                            console.log("valuto BENE votante "+j);
+*/
+                        if(b.layout[x][y].votanti[j].x !== x || b.layout[x][y].votanti[j].y !== y) {
+//                            console.log("valuto BENE votante " + j);
                             let nx = b.layout[x][y].votanti[j].x;
                             let ny = b.layout[x][y].votanti[j].y;
                             let common_points = [];
                             let punti_primo = S.countNA(x, y);
                             let punti_secondo = S.countNA(nx, ny);
-                            console.log("punti primo "+punti_primo);
-                            console.log("punti secondo "+punti_secondo);
-
+//                            console.log("punti primo "+punti_primo);
+//                            console.log("punti secondo "+punti_secondo);
                             for (let k = 0; k < b.layout[x][y].touches.length; k++) {
                                 for (let l = 0; l < b.layout[nx][ny].touches.length; l++) {
                                     if (b.layout[nx][ny].touches[l][0] === b.layout[x][y].touches[k][0] && b.layout[nx][ny].touches[l][1] === b.layout[x][y].touches[k][1]) {
@@ -186,48 +188,69 @@ class Solver {
 //                                console.log("hanno lo stesso valore mancante "+missing_value);
                                 if(common_points.length === missing_value) {
                                     if(common_points.length === punti_primo) {
-                                        console.log("i punti del primo sono tutti in comune");
-                                        let blocks = S.getNA(nx, ny);
+//                                        console.log("i punti del primo sono tutti in comune");
+                                        let blocks = S.getNA(x, y);
                                         let remaining = S.diffNA(blocks, common_points);
-                                        for (let k = 0; k < remaining.length; j++) {
-                                            S.cliccaPosizione(remaining[k][0], remaining[k][1]);
+                                        if(remaining.length > 0){
+                                            cycle_start = [];
                                         }
+                                        for (let k = 0; k < remaining.length; k++) {
+                                            S.cliccaPosizione(remaining[k][0], remaining[k][1]);
+                                            S.safeEnqueue(remaining[k][0], remaining[k][1]);
+                                        }
+                                        S.safePush(x, y);
                                         b.draw();
                                         return;
                                     }
                                     if (common_points.length === punti_secondo) {
-                                        console.log("i punti del secondo sono tutti in comune");
-                                        let blocks = S.getNA(x, y);
+//                                        console.log("i punti del secondo sono tutti in comune");
+                                        let blocks = S.getNA(nx, ny);
                                         let remaining = S.diffNA(blocks, common_points);
-                                        for (let k = 0; k < remaining.length; j++) {
-                                            S.cliccaPosizione(remaining[k][0], remaining[k][1]);
+                                        if(remaining.length > 0){
+                                            cycle_start = [];
                                         }
+                                        for (let k = 0; k < remaining.length; k++) {
+                                            S.cliccaPosizione(remaining[k][0], remaining[k][1]);
+                                            S.safeEnqueue(remaining[k][0], remaining[k][1]);
+                                        }
+                                        S.safePush(x, y);
                                         b.draw();
                                         return;
                                     }
                                 }
                             }
+/*
                             console.log('');
                             console.log(b.layout[x][y].votanti[j]);
                             console.log(b.layout[x][y].votanti[j].value === 100);
+ */
                             if(b.layout[x][y].votanti[j].value === 100) {
+/*
                                 console.log(x + ' ' + y + ' e ' + b.layout[x][y].votanti[j].x + ' ' + b.layout[x][y].votanti[j].y);
                                 console.log(b.layout[x][y].votanti[j].value);
                                 console.log(b.layout[x][y].missing_value);
                                 console.log(b.layout[nx][ny].missing_value);
-
+*/
                                 if (common_points.length === punti_primo) {
-                                    console.log("i punti del primo sono tutti in comune");
+//                                    console.log("i punti del primo sono tutti in comune");
                                     if (b.layout[x][y].missing_value === b.layout[nx][ny].missing_value) {
-                                        console.log("hanno lo stesso valore mancante");
+//                                        console.log("hanno lo stesso valore mancante");
                                         if (b.layout[nx][ny].missing_value === 1) {
-                                            console.log("manca 1 ad entrambi, possiamo rimuovere tutti quelli non in comune");
+//                                            console.log("manca 1 ad entrambi, possiamo rimuovere tutti quelli non in comune");
                                             let blocks = S.getNA(nx, ny);
                                             let remaining = S.diffNA(blocks, common_points);
-                                            for (let k = 0; k < remaining.length; j++) {
-                                                S.cliccaPosizione(remaining[k][0], remaining[k][1]);
+                                            if(remaining.length > 0){
+                                                cycle_start = [];
                                             }
+                                            for (let k = 0; k < remaining.length; k++) {
+                                                S.cliccaPosizione(remaining[k][0], remaining[k][1]);
+                                                S.safeEnqueue(remaining[k][0], remaining[k][1]);
+                                            }
+                                            S.safePush(x, y);
                                             b.draw();
+                                            if(remaining.length > 0) {
+                                                return;
+                                            }
                                         }
 
                                     }
@@ -240,37 +263,60 @@ class Solver {
                                         let blocks = S.getNA(nx, ny);
                                         let remaining = S.diffNA(blocks, common_points);
                                         if (remaining.length === diff) {
+                                            if(remaining.length > 0){
+                                                cycle_start = [];
+                                            }
                                             for (let j = 0; j < remaining.length; j++) {
                                                 S.layout[remaining[j][0]][remaining[j][1]] = "BOMB";
                                                 b.rightClick(remaining[j][0], remaining[j][1]);
                                             }
                                             b.draw();
-                                            console.log("AET");
-                                            return;
                                         }
                                     }
                                 }
                                 if (common_points.length === punti_secondo) {
-                                    console.log("i punti del secondo sono tutti in comune");
+//                                    console.log("i punti del secondo sono tutti in comune");
+                                    if (b.layout[x][y].missing_value > b.layout[nx][ny].missing_value) {
+                                        let diff = b.layout[x][y].missing_value - b.layout[nx][ny].missing_value;
+                                        let blocks = S.getNA(x, y);
+                                        let remaining = S.diffNA(blocks, common_points);
+                                        if (remaining.length === diff) {
+//                                            console.log(" punti del primo non in comune sono bombe");
+                                            if(remaining.length > 0){
+                                                cycle_start = [];
+                                            }
+                                            for (let j = 0; j < remaining.length; j++) {
+                                                S.layout[remaining[j][0]][remaining[j][1]] = "BOMB";
+                                                b.rightClick(remaining[j][0], remaining[j][1]);
+                                            }
+                                            S.safePush(x, y);
+                                            b.draw();
+                                            return;
+                                        }
+                                    }
                                     if (b.layout[x][y].missing_value === b.layout[nx][ny].missing_value) {
-                                        console.log("hanno lo stesso valore mancante");
+//                                        console.log("hanno lo stesso valore mancante");
                                         if (b.layout[nx][ny].missing_value === 1) {
-                                            console.log("manca 1 ad entrambi, possiamo rimuovere tutti quelli non in comune");
+//                                            console.log("manca 1 ad entrambi, possiamo rimuovere tutti quelli non in comune");
                                             let blocks = S.getNA(x, y);
                                             let remaining = S.diffNA(blocks, common_points);
-                                            for (let k = 0; k < remaining.length; j++) {
-                                                S.cliccaPosizione(remaining[k][0], remaining[k][1]);
+                                            if(remaining.length > 0){
+                                                cycle_start = [];
                                             }
+                                            for (let k = 0; k < remaining.length; k++) {
+                                                S.cliccaPosizione(remaining[k][0], remaining[k][1]);
+                                                S.safeEnqueue(remaining[k][0], remaining[k][1]);
+                                            }
+                                            S.safePush(x, y);
                                             b.draw();
+                                            return;
                                         }
 
                                     }
                                 }
                             }
-
                         }
                     }
-*/
                     if(S.guessMode) {
                         let did_something = false;
 
@@ -278,7 +324,7 @@ class Solver {
                             cycle_start = [];
                             b.mouseup(b.layout[x][y].lowest_x, b.layout[x][y].lowest_y);
                             let val = b.layout[b.layout[x][y].lowest_x][b.layout[x][y].lowest_y].getValue();
-                            console.log("GUESS click: " + b.layout[x][y].lowest + " " + b.layout[x][y].lowest_x + " " + b.layout[x][y].lowest_y + ": " + val);
+//                            console.log("GUESS click: " + b.layout[x][y].lowest + " " + b.layout[x][y].lowest_x + " " + b.layout[x][y].lowest_y + ": " + val);
                             S.setValue(b.layout[x][y].lowest_x, b.layout[x][y].lowest_y, val, true);
                             if (S.lost(val)) {
                                 return;
@@ -287,7 +333,7 @@ class Solver {
                             S.safePush(x,y);
                             b.draw();
                             S.guessMode = false;
-                            console.log("GUESSING disabled");
+//                            console.log("GUESSING disabled");
                             did_something = true;
                         }
                         if (b.layout[x][y].highest > 50 || (b.layout[x][y].highest === 50 && b.layout[x][y].lowest === 50)) {
@@ -295,12 +341,12 @@ class Solver {
 
                             S.layout[b.layout[x][y].highest_x][b.layout[x][y].highest_y] = "BOMB";
                             b.rightClick(b.layout[x][y].highest_x, b.layout[x][y].highest_y);
-                            console.log("GUESS BOMB: " + b.layout[x][y].highest + " " + b.layout[x][y].highest_x + " " + b.layout[x][y].highest_y);
+//                            console.log("GUESS BOMB: " + b.layout[x][y].highest + " " + b.layout[x][y].highest_x + " " + b.layout[x][y].highest_y);
 //                            queue.push([x, y]);
                             S.safePush(x,y);
                             b.draw();
                             S.guessMode = false;
-                            console.log("GUESSING disabled");
+//                            console.log("GUESSING disabled");
                             did_something = true;
                         }
 
@@ -316,7 +362,7 @@ class Solver {
                         cycle_start.push([x, y]);
                     }else{
                         if(cycle_start[0][0] === x && cycle_start[0][1] === y){
-                            console.log("STOP");
+//                            console.log("STOP");
                             b.draw();
 //                            queue.unshift([x, y]);
                             S.safeEnqueue(x, y);
@@ -327,7 +373,7 @@ class Solver {
                             queue = [];
                             cycle_start = [];
                             S.guessMode = true;
-                            console.log("GUESSING ENABLED");
+//                            console.log("GUESSING ENABLED");
                             b.draw();
                             return;
                         }
@@ -337,12 +383,15 @@ class Solver {
                 }
             }
             b.draw();
+/*
             if(queue.length === 1) {
                 console.log("solo uno")
             }
+ */
         }else{
-            console.log("work queue empty");
+//            console.log("work queue empty");
             if(current.innerHTML === tot.innerHTML){
+//                console.log("I did it!");
                 if(queryString.indexOf('?start=true') !== -1) {
                     setTimeout(() => {
                         location.href = location.href
@@ -533,7 +582,7 @@ class Solver {
                 if(S.layout[ii][jj] === "na") {
                     let good = true;
 
-                    console.log("calcolo probabilità per: " + ii + " " + jj);
+//                    console.log("calcolo probabilità per: " + ii + " " + jj);
 
                     //calcoliamo la probabilità congiunta
                     if (b.layout[ii][jj].ratio.length > 1) {

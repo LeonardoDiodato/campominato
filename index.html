@@ -15,18 +15,17 @@
 
     </script>
 </head>
-<body style="display:flex;justify-content: space-between;align-items: flex-start;" onload="autoplay()">
+<body style="display:flex;justify-content: space-evenly;align-items: flex-start;" onload="autoplay()">
 <div class="left">
     <select id="level" onchange="setLevel()" style="float:left;">
         <option value="beginner">Beginner</option>
         <option value="intermediate">Intermediate</option>
         <option value="expert">Expert</option>
     </select>
-    <div style="margin:10px 0;"><span id="current"></span> / <span id="tot"></span> : <span id="ratio"></span></div>
+    <div style="float:left;clear:left;margin:10px 0;"><span id="current"></span> / <span id="tot"></span> : <span id="ratio"></span></div>
     <button id="start" onclick="start()" style="float:left;clear:left;margin:10px 0;">Start</button>
     <button style="float:left;clear:left;" onclick="location.href=location.href">RESET</button>
 </div>
 <canvas id="myCanvas" width="960" height="512" style="border:1px solid black;margin-top:100px;"></canvas>
-<p id="log" style="border:1px solid black;float:right;width:300px;max-height:500px;overflow: scroll;"></p>
 </body>
 </html>

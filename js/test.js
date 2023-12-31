@@ -4,8 +4,7 @@ let cycle_start = [];
 let back_queue = [];
 let did_exploration = false;
 let guessTick = 0;
-let workQueueTime = 1000;
-let SOLO = false;
+let workQueueTime = 200;
 const queryString = window.location.toString();
 
 
@@ -20,7 +19,7 @@ function tryAgain(){
     }
     b.mouseup(loc[0], loc[1]);
     let val = b.layout[loc[0]][loc[1]].getValue();
-    if(lost(val)){
+    if(S.lost(val)){
         return;
     }
     if(S.layout[loc[0]][loc[1]] === "BOMB"){
@@ -37,29 +36,6 @@ function pickRandom(){
     return [x, y];
 }
 
-function lost(val){
-    if(val === -1){
-        queue = [];
-        back_queue = [];
-        let time = 1000;
-        if(did_exploration){
-            time = 10000;
-        }
-        clearInterval(S.timer);
-        return;
-        if(queryString.indexOf('?start=true') !== -1) {
-            setTimeout(() => {
-                location.href = location.href
-            }, time);
-        }else {
-            setTimeout(() => {
-                location.href = location.href + "?start=true"
-            }, time);
-        }
-        return true;
-    }
-    return false;
-}
 
 class Solver {
     x = 0;
@@ -77,6 +53,30 @@ class Solver {
                 this.layout[i][j] = "na";
             }
         }
+    }
+
+    lost(val){
+        if(val === -1){
+            console.log("LOST");
+            queue = [];
+            back_queue = [];
+            let time = 1000;
+            if(did_exploration){
+                time = 10000;
+            }
+            clearInterval(S.timer);
+            if(queryString.indexOf('?start=true') !== -1) {
+                setTimeout(() => {
+                    location.href = location.href
+                }, time);
+            }else {
+                setTimeout(() => {
+                    location.href = location.href + "?start=true"
+                }, time);
+            }
+            return true;
+        }
+        return false;
     }
 
     safeEnqueue(x, y){
@@ -102,6 +102,7 @@ class Solver {
         }
     }
 
+//    workQueue(back_queue, queue, b, S, cycle_start, current, tot){
     workQueue(){
         if(back_queue.length > 0) {
             for(let i= 0; i < back_queue.length; i++){
@@ -109,7 +110,6 @@ class Solver {
             }
             back_queue = [];
         }
-        SOLO = queue.length === 1;
         if(queue.length > 0){
             let first = queue.shift();
             let x = first[0];
@@ -154,6 +154,7 @@ class Solver {
 
                     console.log(b.layout[x][y].votanti);
 
+/*
                     for (let j = 0; j < b.layout[x][y].votanti.length; j++){
                         console.log("valuto votante "+j);
                         console.log(typeof b.layout[x][y].votanti[j].x);
@@ -183,14 +184,6 @@ class Solver {
                             }
                             if(b.layout[x][y].votanti[j].missing === missing_value){
 //                                console.log("hanno lo stesso valore mancante "+missing_value);
-/*
-                                if(missing_value === 1){
-                                    console.log(missing_value);
-                                    console.log(j);
-                                    clearInterval(S.timer);
-                                    return;
-                                }
- */
                                 if(common_points.length === missing_value) {
                                     if(common_points.length === punti_primo) {
                                         console.log("i punti del primo sono tutti in comune");
@@ -277,7 +270,7 @@ class Solver {
 
                         }
                     }
-
+*/
                     if(S.guessMode) {
                         let did_something = false;
 
@@ -287,13 +280,11 @@ class Solver {
                             let val = b.layout[b.layout[x][y].lowest_x][b.layout[x][y].lowest_y].getValue();
                             console.log("GUESS click: " + b.layout[x][y].lowest + " " + b.layout[x][y].lowest_x + " " + b.layout[x][y].lowest_y + ": " + val);
                             S.setValue(b.layout[x][y].lowest_x, b.layout[x][y].lowest_y, val, true);
-                            if (lost(val)) {
+                            if (S.lost(val)) {
                                 return;
                             }
-//                            queue.unshift([b.layout[x][y].lowest_x, b.layout[x][y].lowest_y]);
                             S.safeEnqueue(b.layout[x][y].lowest_x, b.layout[x][y].lowest_y);
                             S.safePush(x,y);
-//                            queue.push([x, y]);
                             b.draw();
                             S.guessMode = false;
                             console.log("GUESSING disabled");
@@ -342,7 +333,7 @@ class Solver {
                         }
                     }
                     S.safePush(x,y);
-//                    queue.push([x, y]);
+
                 }
             }
             b.draw();
@@ -352,7 +343,6 @@ class Solver {
         }else{
             console.log("work queue empty");
             if(current.innerHTML === tot.innerHTML){
-                const queryString = window.location.toString();
                 if(queryString.indexOf('?start=true') !== -1) {
                     setTimeout(() => {
                         location.href = location.href
@@ -372,8 +362,8 @@ class Solver {
             let ii = x - 1 + Math.floor(k/3);
             let jj = y - 1 + (k % 3);
             if(x === ii && y === jj){continue;}
-            if(ii >= 0 && ii < this.x && jj >= 0 && jj < this.y) {
-                if(this.layout[ii][jj] === "na"){
+            if(ii >= 0 && ii < S.x && jj >= 0 && jj < S.y) {
+                if(S.layout[ii][jj] === "na"){
                     count++;
                 }
             }
@@ -386,8 +376,8 @@ class Solver {
             let ii = x - 1 + Math.floor(k/3);
             let jj = y - 1 + (k % 3);
             if(x === ii && y === jj){continue;}
-            if(ii >= 0 && ii < this.x && jj >= 0 && jj < this.y) {
-                if(this.layout[ii][jj] === "na"){
+            if(ii >= 0 && ii < S.x && jj >= 0 && jj < S.y) {
+                if(S.layout[ii][jj] === "na"){
                     NAs.push([ii, jj]);
                 }
             }
@@ -417,8 +407,8 @@ class Solver {
             let ii = x - 1 + Math.floor(k/3);
             let jj = y - 1 + (k % 3);
             if(x === ii && y === jj){continue;}
-            if(ii >= 0 && ii < this.x && jj >= 0 && jj < this.y) {
-                if(this.layout[ii][jj] === "BOMB"){
+            if(ii >= 0 && ii < S.x && jj >= 0 && jj < S.y) {
+                if(S.layout[ii][jj] === "BOMB"){
                     count++;
                 }
             }
@@ -431,9 +421,9 @@ class Solver {
             let ii = x - 1 + Math.floor(k/3);
             let jj = y - 1 + (k % 3);
             if(x === ii && y === jj){continue;}
-            if(ii >= 0 && ii < this.x && jj >= 0 && jj < this.y) {
-                if(this.layout[ii][jj] === "na"){
-                    this.layout[ii][jj] = "BOMB";
+            if(ii >= 0 && ii < S.x && jj >= 0 && jj < S.y) {
+                if(S.layout[ii][jj] === "na"){
+                    S.layout[ii][jj] = "BOMB";
 //                    b.layout[ii][jj].rightClick();
                     b.rightClick(ii, jj);
                 }
@@ -445,7 +435,7 @@ class Solver {
         b.mouseup(x, y);
         let val = b.layout[x][y].getValue();
         S.layout[x][y] = b.layout[x][y].getValue();
-        if(lost(val)){
+        if(S.lost(val)){
             return;
         }
     }
@@ -456,8 +446,8 @@ class Solver {
             let ii = x - 1 + Math.floor(k/3);
             let jj = y - 1 + (k % 3);
             if(x === ii && y === jj){continue;}
-            if(ii >= 0 && ii < this.x && jj >= 0 && jj < this.y) {
-                if(this.layout[ii][jj] === "na"){
+            if(ii >= 0 && ii < S.x && jj >= 0 && jj < S.y) {
+                if(S.layout[ii][jj] === "na"){
                     S.cliccaPosizione(ii, jj);
 //                    queue.unshift([ii, jj]);
                     S.safeEnqueue(ii, jj);
@@ -472,11 +462,11 @@ class Solver {
             let ii = x - 1 + Math.floor(k/3);
             let jj = y - 1 + (k % 3);
             if(x === ii && y === jj){continue;}
-            if(ii >= 0 && ii < this.x && jj >= 0 && jj < this.y) {
-                if(this.layout[ii][jj] === "BOMB"){
+            if(ii >= 0 && ii < S.x && jj >= 0 && jj < S.y) {
+                if(S.layout[ii][jj] === "BOMB"){
                     b.rightClick(ii, jj);
                     b.rightClick(ii, jj);
-                    this.layout[ii][jj] = "na"
+                    S.layout[ii][jj] = "na"
                 }
             }
         }
@@ -491,10 +481,10 @@ class Solver {
             let jj = y - 1 + (k % 3);
             if(x === ii && y === jj){continue;}
             if(ii >= 0 && ii < S.x && jj >= 0 && jj < S.y) {
-                if(this.layout[ii][jj] === "na"){
+                if(S.layout[ii][jj] === "na"){
                     availables++;
                 }
-                if(this.layout[ii][jj] === "BOMB"){
+                if(S.layout[ii][jj] === "BOMB"){
                     found++;
                 }
             }
@@ -516,8 +506,8 @@ class Solver {
             let ii = x - 1 + Math.floor(k/3);
             let jj = y - 1 + (k % 3);
             if(x === ii && y === jj){continue;}
-            if(ii >= 0 && ii < this.x && jj >= 0 && jj < this.y) {
-                if(this.layout[ii][jj] === "na"){
+            if(ii >= 0 && ii < S.x && jj >= 0 && jj < S.y) {
+                if(S.layout[ii][jj] === "na"){
                     b.layout[ii][jj].addRatio(ratio_obj);
                 }
             }
@@ -610,33 +600,36 @@ class Solver {
     setValue(x,y,val, exploring = false){
 //        console.log("value: "+x+" "+y+": "+val);
 /*
-        if(this.layout[x][y] === "BOMB"){
+        if(S.layout[x][y] === "BOMB"){
             console.trace();
             return;
             setTimeout(tryAgain, 10);
             return;
         }
  */
-        if(this.layout[x][y] !== "na"){
+        if(S.layout[x][y] !== "na"){
             if(!exploring){
                 return setTimeout(tryAgain, 1000);
             }
             return;
         }
 //        console.log("value: "+x+" "+y+": "+val);
-        this.layout[x][y] = val;
-        if(lost(val)){
+        S.layout[x][y] = val;
+        if(S.lost(val)){
             return;
         }
         if(val === 0){
-            this.explore(x, y);
+            S.explore(x, y);
         }else {
             S.safePush(x,y);
 //            queue.push([x, y]);
         }
         if(!exploring) {
             b.draw();
-            S.timer = setInterval(S.workQueue, workQueueTime);
+            if(S.timer == null){
+//                S.timer = setInterval(S.workQueue(back_queue, queue, b, S, cycle_start, current, tot, window), workQueueTime);
+                S.timer = setInterval(S.workQueue, workQueueTime);
+            }
         }
     }
 
@@ -649,10 +642,10 @@ class Solver {
             let ii = x - 1 + Math.floor(k/3);
             let jj = y - 1 + (k % 3);
             if(x === ii && y === jj){continue;}
-            if(ii >= 0 && ii < this.x && jj >= 0 && jj < this.y) {
+            if(ii >= 0 && ii < S.x && jj >= 0 && jj < S.y) {
                 let val = b.getValue(ii, jj);
                 if (val !== "block") {
-                    this.setValue(ii, jj, val, true);
+                    S.setValue(ii, jj, val, true);
                 }
             }
         }

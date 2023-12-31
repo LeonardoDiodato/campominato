@@ -6,8 +6,7 @@ let did_exploration = false;
 let guessTick = 0;
 let workQueueTime = 1000;
 let SOLO = false;
-let logger = document.getElementById('log');
-let scroll_tick = document.getElementById('follow');
+const queryString = window.location.toString();
 
 
 function start(){
@@ -21,7 +20,6 @@ function tryAgain(){
     }
     b.mouseup(loc[0], loc[1]);
     let val = b.layout[loc[0]][loc[1]].getValue();
-    log("click: "+loc[0]+" "+loc[1]+": "+val);
     if(lost(val)){
         return;
     }
@@ -32,12 +30,6 @@ function tryAgain(){
     S.setValue(loc[0],loc[1], val);
 }
 
-function log(input){
-    logger.innerHTML += input+"<br>";
-    if(scroll_tick.checked) {
-        logger.scrollTop = logger.scrollHeight;
-    }
-}
 
 function pickRandom(){
     let x = Math.floor(Math.random() * b.x);
@@ -53,9 +45,8 @@ function lost(val){
         if(did_exploration){
             time = 10000;
         }
-        log("lost");
         clearInterval(S.timer);
-        const queryString = window.location.toString();
+        return;
         if(queryString.indexOf('?start=true') !== -1) {
             setTimeout(() => {
                 location.href = location.href
@@ -88,6 +79,29 @@ class Solver {
         }
     }
 
+    safeEnqueue(x, y){
+        let found = false;
+        for(let i = 0; i < queue.length; i++){
+            if(queue[i][0] === x && queue[i][1] === y){
+                found  = true;
+            }
+        }
+        if(!found){
+            queue.unshift([x, y]);
+        }
+    }
+    safePush(x, y){
+        let found = false;
+        for(let i = 0; i < queue.length; i++){
+            if(queue[i][0] === x && queue[i][1] === y){
+                found  = true;
+            }
+        }
+        if(!found){
+            queue.push([x, y]);
+        }
+    }
+
     workQueue(){
         if(back_queue.length > 0) {
             for(let i= 0; i < back_queue.length; i++){
@@ -104,7 +118,6 @@ class Solver {
                 b.layout[x][y].touches = [];
             }
             b.layout[x][y].valuto = true;
-//            log("valuto "+x+" "+y+": "+S.layout[x][y]);
             console.log("valuto "+x+" "+y+": "+S.layout[x][y]);
             if(S.layout[x][y] === -1){
                 console.log(queue);
@@ -122,7 +135,8 @@ class Solver {
                 //in questa situazione ci sono più bandierine di quelle che dovrebbero esserci
                 S.cleanAround(x,y);
                 //TODO: requeue around numbers
-                queue.unshift([x, y]);
+//                queue.unshift([x, y]);
+                S.safeEnqueue(x, y);
                 b.draw();
                 return;
             }
@@ -136,115 +150,85 @@ class Solver {
                     cycle_start = [];
                 } else {
                     S.computeStats(x,y);
-                    let lowest = 999;
-                    let lowest_x = lowest;
-                    let lowest_y = lowest;
-                    let highest = 0;
-                    let highest_x = highest;
-                    let highest_y = highest;
-                    let votanti = [];
-                    let missing_value = S.layout[x][y];
+                    let missing_value = b.layout[x][y].missing_value;
 
-                    //calcolo probabilità e vicini
-                    for(let k = 0; k < 9; k++) {
-                        let p = 100;
-                        let ii = x - 1 + Math.floor(k / 3);
-                        let jj = y - 1 + (k % 3);
-                        if (x === ii && y === jj) {
-                            continue;
-                        }
-                        if (ii >= 0 && ii < S.x && jj >= 0 && jj < S.y) {
-                            if(S.layout[ii][jj] === "na") {
-                                let good = true;
+                    console.log(b.layout[x][y].votanti);
 
-//                                log("calcolo probabilità per: " + ii + " " + jj);
+                    for (let j = 0; j < b.layout[x][y].votanti.length; j++){
+                        console.log("valuto votante "+j);
+                        console.log(typeof b.layout[x][y].votanti[j].x);
+                        console.log(b.layout[x][y].votanti[j].x);
+                        console.log(typeof x);
+                        console.log(x);
+                        console.log(typeof b.layout[x][y].votanti[j].y);
+                        console.log(b.layout[x][y].votanti[j].y);
+                        console.log(typeof y);
+                        console.log(y);
+                        if(b.layout[x][y].votanti[j].x !== x || b.layout[x][y].votanti[j].y !== y){
+                            console.log("valuto BENE votante "+j);
+                            let nx = b.layout[x][y].votanti[j].x;
+                            let ny = b.layout[x][y].votanti[j].y;
+                            let common_points = [];
+                            let punti_primo = S.countNA(x, y);
+                            let punti_secondo = S.countNA(nx, ny);
+                            console.log("punti primo "+punti_primo);
+                            console.log("punti secondo "+punti_secondo);
 
-                                //calcoliamo la probabilità congiunta
-                                if (b.layout[ii][jj].ratio.length > 1) {
-                                    let num_voti = b.layout[ii][jj].ratio.length;
-                                    let sum = 0;
-                                    for (let i = 0; i < b.layout[ii][jj].ratio.length; i++) {
-                                        let r = b.layout[ii][jj].ratio[i].value
-                                        let chi = b.layout[ii][jj].ratio[i].from[0]+"_"+b.layout[ii][jj].ratio[i].from[1];
-                                        let f = false;
-                                        for (let j = 0; j < votanti.length; j++){
-                                            if(votanti[j].chi === chi){
-                                                f = true;
-                                                votanti[j].value += r;
-                                            }
-                                        }
-                                        if(!f){
-                                            votanti.push({chi:chi, value:r, x:b.layout[ii][jj].ratio[i].from[0], y:b.layout[ii][jj].ratio[i].from[1]});
-                                        }
-//                                        console.log(chi);
-                                        if(r >= 50){
-                                            good = false;
-                                        }
-                                        sum += r;
+                            for (let k = 0; k < b.layout[x][y].touches.length; k++) {
+                                for (let l = 0; l < b.layout[nx][ny].touches.length; l++) {
+                                    if (b.layout[nx][ny].touches[l][0] === b.layout[x][y].touches[k][0] && b.layout[nx][ny].touches[l][1] === b.layout[x][y].touches[k][1]) {
+                                        common_points.push([b.layout[nx][ny].touches[l][0], b.layout[nx][ny].touches[l][1]]);
                                     }
-                                    p = sum / num_voti;
-                                    b.layout[ii][jj].combined_ratio = p;
-                                } else {
- //                                   log("singolo input");
-                                    p = b.layout[ii][jj].ratio[0].value;
-                                }
-//                                log(p);
-                                if (good && p < lowest) {
-                                    lowest = p;
-                                    lowest_x = ii;
-                                    lowest_y = jj;
-                                }
-                                if(p > highest){
-                                    highest = p;
-                                    highest_x = ii;
-                                    highest_y = jj;
-                                }
-
-                                let r = false;
-                                for(let i = 0; i < b.layout[x][y].touches.length; i++){
-                                    if(b.layout[x][y].touches[i][0] === ii && b.layout[x][y].touches[i][1] === jj){
-                                        r = true;
-                                    }
-                                }
-                                if(!r) {
-                                    b.layout[x][y].touches.push([ii, jj]);
-                                }
-
-                            }else{
-                                if(S.layout[ii][jj] === "BOMB"){
-                                    missing_value--;
                                 }
                             }
-                        }
-                    }
-                    b.layout[x][y].missing_value = missing_value;
-
-                    for (let j = 0; j < votanti.length; j++){
-                        if(votanti[j].x !== x && votanti[j].y !== y){
-                            let nx = votanti[j].x;
-                            let ny = votanti[j].y;
-                            if(votanti[j].value === 100) {
-                                log(x + ' ' + y + ' e ' + votanti[j].x + ' ' + votanti[j].y);
-                                log(votanti[j].value);
-                                log(b.layout[x][y].missing_value);
-                                log(b.layout[nx][ny].missing_value);
-
-                                let common_points = [];
-                                for (let k = 0; k < b.layout[x][y].touches.length; k++) {
-                                    for (let l = 0; l < b.layout[nx][ny].touches.length; l++) {
-                                        if (b.layout[nx][ny].touches[l][0] === b.layout[x][y].touches[k][0] && b.layout[nx][ny].touches[l][1] === b.layout[x][y].touches[k][1]) {
-                                            common_points.push([b.layout[nx][ny].touches[l][0], b.layout[nx][ny].touches[l][1]]);
+                            if(b.layout[x][y].votanti[j].missing === missing_value){
+//                                console.log("hanno lo stesso valore mancante "+missing_value);
+/*
+                                if(missing_value === 1){
+                                    console.log(missing_value);
+                                    console.log(j);
+                                    clearInterval(S.timer);
+                                    return;
+                                }
+ */
+                                if(common_points.length === missing_value) {
+                                    if(common_points.length === punti_primo) {
+                                        console.log("i punti del primo sono tutti in comune");
+                                        let blocks = S.getNA(nx, ny);
+                                        let remaining = S.diffNA(blocks, common_points);
+                                        for (let k = 0; k < remaining.length; j++) {
+                                            S.cliccaPosizione(remaining[k][0], remaining[k][1]);
                                         }
+                                        b.draw();
+                                        return;
+                                    }
+                                    if (common_points.length === punti_secondo) {
+                                        console.log("i punti del secondo sono tutti in comune");
+                                        let blocks = S.getNA(x, y);
+                                        let remaining = S.diffNA(blocks, common_points);
+                                        for (let k = 0; k < remaining.length; j++) {
+                                            S.cliccaPosizione(remaining[k][0], remaining[k][1]);
+                                        }
+                                        b.draw();
+                                        return;
                                     }
                                 }
-                                let punti_primo = S.countNA(x, y);
-                                let punti_secondo = S.countNA(nx, ny);
+                            }
+                            console.log('');
+                            console.log(b.layout[x][y].votanti[j]);
+                            console.log(b.layout[x][y].votanti[j].value === 100);
+                            if(b.layout[x][y].votanti[j].value === 100) {
+                                console.log(x + ' ' + y + ' e ' + b.layout[x][y].votanti[j].x + ' ' + b.layout[x][y].votanti[j].y);
+                                console.log(b.layout[x][y].votanti[j].value);
+                                console.log(b.layout[x][y].missing_value);
+                                console.log(b.layout[nx][ny].missing_value);
+
                                 if (common_points.length === punti_primo) {
-                                    log("i punti del primo sono tutti in comune");
+                                    console.log("i punti del primo sono tutti in comune");
                                     if (b.layout[x][y].missing_value === b.layout[nx][ny].missing_value) {
-                                        log("hanno lo stesso valore mancante");
+                                        console.log("hanno lo stesso valore mancante");
                                         if (b.layout[nx][ny].missing_value === 1) {
-                                            log("manca 1 ad entrambi, possiamo rimuovere tutti quelli non in comune");
+                                            console.log("manca 1 ad entrambi, possiamo rimuovere tutti quelli non in comune");
                                             let blocks = S.getNA(nx, ny);
                                             let remaining = S.diffNA(blocks, common_points);
                                             for (let k = 0; k < remaining.length; j++) {
@@ -255,7 +239,8 @@ class Solver {
 
                                     }
                                     if (b.layout[x][y].missing_value < b.layout[nx][ny].missing_value) {
-                                        queue.push([x, y]);
+                                        S.safePush(x,y);
+//                                        queue.push([x, y]);
                                         return;
                                         //se le mine mancanti del primo sono meno di quelle del secondo
                                         let diff = b.layout[nx][ny].missing_value - b.layout[x][y].missing_value;
@@ -267,17 +252,17 @@ class Solver {
                                                 b.rightClick(remaining[j][0], remaining[j][1]);
                                             }
                                             b.draw();
-                                            log("AET");
+                                            console.log("AET");
                                             return;
                                         }
                                     }
                                 }
                                 if (common_points.length === punti_secondo) {
-                                    log("i punti del secondo sono tutti in comune");
+                                    console.log("i punti del secondo sono tutti in comune");
                                     if (b.layout[x][y].missing_value === b.layout[nx][ny].missing_value) {
-                                        log("hanno lo stesso valore mancante");
+                                        console.log("hanno lo stesso valore mancante");
                                         if (b.layout[nx][ny].missing_value === 1) {
-                                            log("manca 1 ad entrambi, possiamo rimuovere tutti quelli non in comune");
+                                            console.log("manca 1 ad entrambi, possiamo rimuovere tutti quelli non in comune");
                                             let blocks = S.getNA(x, y);
                                             let remaining = S.diffNA(blocks, common_points);
                                             for (let k = 0; k < remaining.length; j++) {
@@ -296,49 +281,41 @@ class Solver {
                     if(S.guessMode) {
                         let did_something = false;
 
-                        if (lowest < 50) {
+                        if (b.layout[x][y].lowest < 50) {
                             cycle_start = [];
-                            b.mouseup(lowest_x, lowest_y);
-                            let val = b.layout[lowest_x][lowest_y].getValue();
-                            log("GUESS click: " + lowest + " " + lowest_x + " " + lowest_y + ": " + val);
-                            S.setValue(lowest_x, lowest_y, val, true);
+                            b.mouseup(b.layout[x][y].lowest_x, b.layout[x][y].lowest_y);
+                            let val = b.layout[b.layout[x][y].lowest_x][b.layout[x][y].lowest_y].getValue();
+                            console.log("GUESS click: " + b.layout[x][y].lowest + " " + b.layout[x][y].lowest_x + " " + b.layout[x][y].lowest_y + ": " + val);
+                            S.setValue(b.layout[x][y].lowest_x, b.layout[x][y].lowest_y, val, true);
                             if (lost(val)) {
                                 return;
                             }
-                            queue.unshift([lowest_x, lowest_y]);
-                            queue.push([x, y]);
+//                            queue.unshift([b.layout[x][y].lowest_x, b.layout[x][y].lowest_y]);
+                            S.safeEnqueue(b.layout[x][y].lowest_x, b.layout[x][y].lowest_y);
+                            S.safePush(x,y);
+//                            queue.push([x, y]);
                             b.draw();
                             S.guessMode = false;
-                            log("GUESSING disabled");
+                            console.log("GUESSING disabled");
                             did_something = true;
                         }
-                        if (highest > 50) {
+                        if (b.layout[x][y].highest > 50 || (b.layout[x][y].highest === 50 && b.layout[x][y].lowest === 50)) {
                             cycle_start = [];
 
-                            S.layout[highest_x][highest_y] = "BOMB";
-                            b.rightClick(highest_x, highest_y);
-                            log("GUESS BOMB: " + highest + " " + highest_x + " " + highest_y);
-                            queue.push([x, y]);
+                            S.layout[b.layout[x][y].highest_x][b.layout[x][y].highest_y] = "BOMB";
+                            b.rightClick(b.layout[x][y].highest_x, b.layout[x][y].highest_y);
+                            console.log("GUESS BOMB: " + b.layout[x][y].highest + " " + b.layout[x][y].highest_x + " " + b.layout[x][y].highest_y);
+//                            queue.push([x, y]);
+                            S.safePush(x,y);
                             b.draw();
                             S.guessMode = false;
-                            log("GUESSING disabled");
-                            did_something = true;
-                        }
-                        if (highest === 50 && lowest === 50) {
-                            cycle_start = [];
-
-                            S.layout[highest_x][highest_y] = "BOMB";
-                            b.rightClick(highest_x, highest_y);
-                            log("GUESS BOMB: " + highest + " " + highest_x + " " + highest_y);
-                            queue.push([x, y]);
-                            b.draw();
-                            S.guessMode = false;
-                            log("GUESSING disabled");
+                            console.log("GUESSING disabled");
                             did_something = true;
                         }
 
                         if(!did_something){
-                            queue.push([x, y]);
+                            S.safePush(x,y);
+//                            queue.push([x, y]);
                             return;
                         }
 
@@ -348,29 +325,32 @@ class Solver {
                         cycle_start.push([x, y]);
                     }else{
                         if(cycle_start[0][0] === x && cycle_start[0][1] === y){
-                            log("STOP");
+                            console.log("STOP");
                             b.draw();
-                            queue.unshift([x, y]);
+//                            queue.unshift([x, y]);
+                            S.safeEnqueue(x, y);
+
                             for(let i= 0; i < queue.length; i++){
                                 back_queue.push(queue[i]);
                             }
                             queue = [];
                             cycle_start = [];
                             S.guessMode = true;
-                            log("GUESSING ENABLED");
+                            console.log("GUESSING ENABLED");
                             b.draw();
                             return;
                         }
                     }
-                    queue.push([x, y]);
+                    S.safePush(x,y);
+//                    queue.push([x, y]);
                 }
             }
             b.draw();
             if(queue.length === 1) {
-                log("solo uno")
+                console.log("solo uno")
             }
         }else{
-            log("work queue empty");
+            console.log("work queue empty");
             if(current.innerHTML === tot.innerHTML){
                 const queryString = window.location.toString();
                 if(queryString.indexOf('?start=true') !== -1) {
@@ -446,7 +426,7 @@ class Solver {
         return count;
     }
     markSolved(x,y){
-//        log("mark Solved "+x+" "+y);
+//        console.log("mark Solved "+x+" "+y);
         for(let k = 0; k < 9; k++) {
             let ii = x - 1 + Math.floor(k/3);
             let jj = y - 1 + (k % 3);
@@ -471,7 +451,7 @@ class Solver {
     }
 
     clickAround(x,y){
-//        log("click Around "+x+" "+y);
+//        console.log("click Around "+x+" "+y);
         for(let k = 0; k < 9; k++) {
             let ii = x - 1 + Math.floor(k/3);
             let jj = y - 1 + (k % 3);
@@ -479,14 +459,15 @@ class Solver {
             if(ii >= 0 && ii < this.x && jj >= 0 && jj < this.y) {
                 if(this.layout[ii][jj] === "na"){
                     S.cliccaPosizione(ii, jj);
-                    queue.unshift([ii, jj]);
+//                    queue.unshift([ii, jj]);
+                    S.safeEnqueue(ii, jj);
                 }
             }
         }
         b.layout[x][y].explored = true;
     }
     cleanAround(x,y){
-//        log("CLEAN Around "+x+" "+y);
+//        console.log("CLEAN Around "+x+" "+y);
         for(let k = 0; k < 9; k++) {
             let ii = x - 1 + Math.floor(k/3);
             let jj = y - 1 + (k % 3);
@@ -501,7 +482,7 @@ class Solver {
         }
     }
     computeStats(x,y){
-//        log("COMPUTE "+x+" "+y);
+//        console.log("COMPUTE "+x+" "+y);
         let availables = 0;
         let found = 0;
         let val = parseInt(S.layout[x][y]);
@@ -541,10 +522,93 @@ class Solver {
                 }
             }
         }
+
+        b.layout[x][y].lowest = 999;
+        b.layout[x][y].lowest_x = b.layout[x][y].lowest;
+        b.layout[x][y].lowest_y = b.layout[x][y].lowest;
+        b.layout[x][y].highest = 0;
+        b.layout[x][y].highest_x = b.layout[x][y].highest;
+        b.layout[x][y].highest_y = b.layout[x][y].highest;
+        b.layout[x][y].votanti = [];
+        let missing_value = S.layout[x][y];
+        //calcolo probabilità e vicini
+        for(let k = 0; k < 9; k++) {
+            let p = 100;
+            let ii = x - 1 + Math.floor(k / 3);
+            let jj = y - 1 + (k % 3);
+            if (x === ii && y === jj) {
+                continue;
+            }
+            if (ii >= 0 && ii < S.x && jj >= 0 && jj < S.y) {
+                if(S.layout[ii][jj] === "na") {
+                    let good = true;
+
+                    console.log("calcolo probabilità per: " + ii + " " + jj);
+
+                    //calcoliamo la probabilità congiunta
+                    if (b.layout[ii][jj].ratio.length > 1) {
+                        let num_voti = b.layout[ii][jj].ratio.length;
+                        let sum = 0;
+                        for (let i = 0; i < b.layout[ii][jj].ratio.length; i++) {
+                            let r = b.layout[ii][jj].ratio[i].value
+                            let chi = b.layout[ii][jj].ratio[i].from[0]+"_"+b.layout[ii][jj].ratio[i].from[1];
+                            let f = false;
+                            for (let j = 0; j < b.layout[x][y].votanti.length; j++){
+                                if(b.layout[x][y].votanti[j].chi === chi){
+                                    f = true;
+                                    b.layout[x][y].votanti[j].value += r;
+                                }
+                            }
+                            if(!f){
+                                b.layout[x][y].votanti.push({chi:chi, value:r, x:b.layout[ii][jj].ratio[i].from[0], y:b.layout[ii][jj].ratio[i].from[1], missing:b.layout[b.layout[ii][jj].ratio[i].from[0]][b.layout[ii][jj].ratio[i].from[1]].missing_value});
+                            }
+//                                        console.log(chi);
+                            if(r >= 50){
+                                good = false;
+                            }
+                            sum += r;
+                        }
+                        p = sum / num_voti;
+                        b.layout[ii][jj].combined_ratio = p;
+                    } else {
+                        //                                   console.log("singolo input");
+                        p = b.layout[ii][jj].ratio[0].value;
+                    }
+//                                console.log(p);
+                    if (good && p < b.layout[x][y].lowest) {
+                        b.layout[x][y].lowest = p;
+                        b.layout[x][y].lowest_x = ii;
+                        b.layout[x][y].lowest_y = jj;
+                    }
+                    if(p > b.layout[x][y].highest){
+                        b.layout[x][y].highest = p;
+                        b.layout[x][y].highest_x = ii;
+                        b.layout[x][y].highest_y = jj;
+                    }
+
+                    let r = false;
+                    for(let i = 0; i < b.layout[x][y].touches.length; i++){
+                        if(b.layout[x][y].touches[i][0] === ii && b.layout[x][y].touches[i][1] === jj){
+                            r = true;
+                        }
+                    }
+                    if(!r) {
+                        b.layout[x][y].touches.push([ii, jj]);
+                    }
+
+                }else{
+                    if(S.layout[ii][jj] === "BOMB"){
+                        missing_value--;
+                    }
+                }
+            }
+        }
+        b.layout[x][y].missing_value = missing_value;
+
     }
 
     setValue(x,y,val, exploring = false){
-//        log("value: "+x+" "+y+": "+val);
+//        console.log("value: "+x+" "+y+": "+val);
 /*
         if(this.layout[x][y] === "BOMB"){
             console.trace();
@@ -559,7 +623,7 @@ class Solver {
             }
             return;
         }
-//        log("value: "+x+" "+y+": "+val);
+//        console.log("value: "+x+" "+y+": "+val);
         this.layout[x][y] = val;
         if(lost(val)){
             return;
@@ -567,7 +631,8 @@ class Solver {
         if(val === 0){
             this.explore(x, y);
         }else {
-            queue.push([x, y]);
+            S.safePush(x,y);
+//            queue.push([x, y]);
         }
         if(!exploring) {
             b.draw();
@@ -595,4 +660,12 @@ class Solver {
     }
 }
 
-const S = new Solver(b.x, b.y);
+let S = null;
+
+if(typeof b !== "undefined"){
+    S = new Solver(b.x, b.y);
+}else{
+    setTimeout(() => {
+        S = new Solver(b.x, b.y);
+    }, 1000)
+}

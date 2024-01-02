@@ -200,7 +200,9 @@ class Solver {
                                         }
                                         S.safePush(x, y);
                                         b.draw();
-                                        return;
+                                        if(remaining.length > 0) {
+                                            return;
+                                        }
                                     }
                                     if (common_points.length === punti_secondo) {
 //                                        console.log("i punti del secondo sono tutti in comune");
@@ -215,7 +217,9 @@ class Solver {
                                         }
                                         S.safePush(x, y);
                                         b.draw();
-                                        return;
+                                        if(remaining.length > 0) {
+                                            return;
+                                        }
                                     }
                                 }
                             }
@@ -291,7 +295,9 @@ class Solver {
                                             }
                                             S.safePush(x, y);
                                             b.draw();
-                                            return;
+                                            if(remaining.length > 0) {
+                                                return;
+                                            }
                                         }
                                     }
                                     if (b.layout[x][y].missing_value === b.layout[nx][ny].missing_value) {
@@ -309,7 +315,9 @@ class Solver {
                                             }
                                             S.safePush(x, y);
                                             b.draw();
-                                            return;
+                                            if(remaining.length > 0) {
+                                                return;
+                                            }
                                         }
 
                                     }
